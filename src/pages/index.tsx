@@ -1,33 +1,25 @@
 import * as React from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "gatsby";
 
 import HeaderMenu from "../components/HeaderMenu/HeaderMenu";
 import { withLayout, LayoutProps, menuItems } from "../components/Layout";
 import { Segment, Header, Table } from "semantic-ui-react";
-import localstore from "../localstore";
-import { chain, Dictionary, pickBy } from "lodash";
+import { Dictionary, pickBy } from "lodash";
+import useConfData from "../useConfData";
+import { SmallTalkCard } from "../components/TalkCard";
+import { SemanticCOLORS } from "semantic-ui-react/dist/commonjs/generic";
+import TalkDetail from "../components/TalkDetail";
+import { getTime } from "../helpers";
 
-const IndexPage = (props: LayoutProps) => {
-  const [eventData, setEventData] = useState(null as any);
-  const [talks, setTalks] = useState([]);
-  const [rooms, setRooms] = useState([]);
+const SchedulePage = (props: LayoutProps) => {
+  const { rooms, talks, eventData, talksGroupBySlotStart } = useConfData();
+  const [displayedTalk, setDisplayedTalk] = useState<string | null>(null);
 
-  useEffect(() => {
-    localstore.getConf(true).then(data => {
-      setEventData(data);
-    });
-    localstore.getTalks(true).then(data => setTalks(data));
-    localstore.getRooms(true).then(data => setRooms(data));
-  }, [localstore, setEventData]);
-
-  const talksGroupBySlotStart = chain(talks)
-    .sortBy(talk => talk.slot.start)
-    .groupBy(talk => talk.slot.start)
-    .value();
-
-  if (rooms.length === 0 || talks.length === 0 || eventData == null)
+  if (rooms.length === 0 || talks.length === 0 || eventData == null) {
     return null;
+  }
+
   return (
     <div>
       <Segment vertical inverted textAlign="center">
@@ -39,38 +31,42 @@ const IndexPage = (props: LayoutProps) => {
         />
       </Segment>
 
-      <Segment vertical className="container">
-        <Header as="h2">{`Welcome to ${
-          eventData != null ? eventData?.name?.en : ""
-        }!`}</Header>
-        <DailyTable
-          day={"Friday 17. April"}
-          talks={talks}
-          rooms={rooms}
-          talksGroupBySlotStart={pickBy(
-            talksGroupBySlotStart,
-            (groupedTalks, key) => new Date(key).getDate() === 17
-          )}
-        />
-        <DailyTable
-          day={"Saturday 18. April"}
-          talks={talks}
-          rooms={rooms}
-          talksGroupBySlotStart={pickBy(
-            talksGroupBySlotStart,
-            (groupedTalks, key) => new Date(key).getDate() === 18
-          )}
-        />
-        <DailyTable
-          day={"Sunday 19. April"}
-          talks={talks}
-          rooms={rooms}
-          talksGroupBySlotStart={pickBy(
-            talksGroupBySlotStart,
-            (groupedTalks, key) => new Date(key).getDate() === 19
-          )}
-        />
-      </Segment>
+      {displayedTalk != null ? (
+        <TalkDetail id={displayedTalk} onPress={() => setDisplayedTalk(null)} />
+      ) : (
+        <Segment vertical className="container">
+          <Header as="h2">{`Welcome to ${
+            eventData != null ? eventData?.name?.en : ""
+          }!`}</Header>
+          <DailyTable
+            day={"Friday 17. April"}
+            setDisplayedTalk={setDisplayedTalk}
+            rooms={rooms}
+            talksGroupBySlotStart={pickBy(
+              talksGroupBySlotStart,
+              (groupedTalks, key) => new Date(key).getDate() === 17
+            )}
+          />
+          <DailyTable
+            day={"Saturday 18. April"}
+            setDisplayedTalk={setDisplayedTalk}
+            rooms={rooms}
+            talksGroupBySlotStart={pickBy(
+              talksGroupBySlotStart,
+              (groupedTalks, key) => new Date(key).getDate() === 18
+            )}
+          />
+          <DailyTable
+            day={"Sunday 19. April"}
+            setDisplayedTalk={setDisplayedTalk}
+            rooms={rooms}
+            talksGroupBySlotStart={pickBy(
+              talksGroupBySlotStart,
+              (groupedTalks, key) => new Date(key).getDate() === 19
+            )}
+          />
+        </Segment>
+      )}
     </div>
   );
 };
@@ -79,8 +75,8 @@ const DailyTable: React.FC<{
   day: string;
   rooms: any[];
   talksGroupBySlotStart: Dictionary<any[]>;
-  talks: any[];
-}> = ({ rooms, talksGroupBySlotStart, day, talks }) => {
+  setDisplayedTalk: (id: string) => void;
+}> = ({ rooms, talksGroupBySlotStart, day, setDisplayedTalk }) => {
   return (
     <>
       <Header as="h3">{day}</Header>
@@ -100,28 +96,42 @@ const DailyTable: React.FC<{
         </Table.Header>
         <Table.Body>
           {Object.entries(talksGroupBySlotStart).map(([time, talks], index) => {
+            const talk1 = talks.find(
+              talk => talk.slot.room.en === rooms[0].name.en
+            );
+            const talk2 = talks.find(
+              talk => talk.slot.room.en === rooms[1].name.en
+            );
             return (
               <Table.Row>
                 <Table.Cell>{getTime(time)}</Table.Cell>
                 {
                   <>
                     <Table.Cell>
-                      <div style={{ backgroundColor: colors[0] }}>
-                        {
-                          talks.find(
-                            talk => talk.slot.room.en === rooms[0].name.en
-                          )?.title
-                        }
-                      </div>
+                      {talk1 != null && (
+                        <SmallTalkCard
+                          color={colors[0]}
+                          title={talk1.title}
+                          presenter={talk1.speakers[0].name}
+                          track={talk1.track}
+                          onPress={() => setDisplayedTalk(talk1.code)}
+                        >
+                          {talk1.title}
+                        </SmallTalkCard>
+                      )}
                     </Table.Cell>
                     <Table.Cell>
-                      <div style={{ backgroundColor: colors[1] }}>
-                        {
-                          talks.find(
-                            talk => talk.slot.room.en === rooms[1].name.en
-                          )?.title
-                        }
-                      </div>
+                      {talk2 != null && (
+                        <SmallTalkCard
+                          color={colors[1]}
+                          title={talk2.title}
+                          presenter={talk2.speakers[0].name}
+                          track={talk2.track}
+                          onPress={() => setDisplayedTalk(talk1.code)}
+                        >
+                          {talk2.title}
+                        </SmallTalkCard>
+                      )}
                     </Table.Cell>
                   </>
                 }
@@ -134,16 +144,9 @@ const DailyTable: React.FC<{
   );
 };
 
-const colors = ["magenta", "khaki"];
-
-const getTime = (date: string) => {
-  return new Date(date).toLocaleTimeString(navigator.language, {
-    hour: "2-digit",
-    minute: "2-digit"
-  });
-};
+const colors: SemanticCOLORS[] = ["teal", "olive"];
 
 const getDay = (date: string) => {
   return new Date(date).getDay();
 };
-export default withLayout(IndexPage);
+export default withLayout(SchedulePage);
