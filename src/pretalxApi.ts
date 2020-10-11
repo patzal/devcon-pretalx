@@ -3,7 +3,7 @@ const fetchSpeakers = async () => {
     "https://pretalx.com/api/events/democon/speakers/?limit=25&offset=25"
   );
   const json = await resp.json();
-  return json;
+  return json.results;
 };
 
 const fetchConf = async () => {
@@ -15,7 +15,13 @@ const fetchConf = async () => {
 const fetchTalks = async () => {
   const resp = await fetch("https://pretalx.com/api/events/democon/talks/");
   const json = await resp.json();
-  return json;
+  return json.results;
 };
 
-export default { fetchSpeakers, fetchConf, fetchTalks };
+const fetchRooms = async () => {
+  const resp = await fetch("https://pretalx.com/api/events/democon/rooms/");
+  const json = await resp.json();
+  return json.results;
+};
+
+export default { fetchSpeakers, fetchConf, fetchTalks, fetchRooms };
