@@ -4,9 +4,9 @@ import { Link } from "gatsby";
 
 import HeaderMenu from "../components/HeaderMenu/HeaderMenu";
 import { withLayout, LayoutProps, menuItems } from "../components/Layout";
-import { Segment, Grid, Header, Icon, Table } from "semantic-ui-react";
+import { Segment, Header, Table } from "semantic-ui-react";
 import localstore from "../localstore";
-import { chain, Dictionary, filter, pickBy } from "lodash";
+import { chain, Dictionary, pickBy } from "lodash";
 
 const IndexPage = (props: LayoutProps) => {
   const [eventData, setEventData] = useState(null as any);
@@ -21,15 +21,10 @@ const IndexPage = (props: LayoutProps) => {
     localstore.getRooms(true).then(data => setRooms(data));
   }, [localstore, setEventData]);
 
-  console.log(eventData);
-  console.log(talks);
-
   const talksGroupBySlotStart = chain(talks)
     .sortBy(talk => talk.slot.start)
     .groupBy(talk => talk.slot.start)
     .value();
-  // const talksArray = Object.entries(talksGroupBySlotStart);
-  console.log(talksGroupBySlotStart);
 
   if (rooms.length === 0 || talks.length === 0 || eventData == null)
     return null;
@@ -76,54 +71,6 @@ const IndexPage = (props: LayoutProps) => {
           )}
         />
       </Segment>
-
-      {/* Key features */}
-      <Segment vertical className="stripe alternate feature">
-        <Grid
-          columns="3"
-          textAlign="center"
-          divided
-          relaxed
-          stackable
-          className="container"
-        >
-          <Grid.Row>
-            <Grid.Column>
-              <Header icon>
-                <Icon name="wizard"></Icon>A kind of magic!
-              </Header>
-              <p>
-                Lorem ipsum dolor sit amet, consectetur adipisicing elit.
-                Voluptas eaque at quae cupiditate aspernatur quibusdam!
-                Distinctio quod non, harum dolorum earum molestias, beatae
-                expedita aliquam dolorem asperiores nemo amet quaerat.
-              </p>
-            </Grid.Column>
-            <Grid.Column>
-              <Header icon>
-                <Icon name="wizard"></Icon>A kind of magic!
-              </Header>
-              <p>
-                Lorem ipsum dolor sit amet, consectetur adipisicing elit.
-                Voluptas eaque at quae cupiditate aspernatur quibusdam!
-                Distinctio quod non, harum dolorum earum molestias, beatae
-                expedita aliquam dolorem asperiores nemo amet quaerat.
-              </p>
-            </Grid.Column>
-            <Grid.Column>
-              <Header icon>
-                <Icon name="wizard"></Icon>A kind of magic!
-              </Header>
-              <p>
-                Lorem ipsum dolor sit amet, consectetur adipisicing elit.
-                Voluptas eaque at quae cupiditate aspernatur quibusdam!
-                Distinctio quod non, harum dolorum earum molestias, beatae
-                expedita aliquam dolorem asperiores nemo amet quaerat.
-              </p>
-            </Grid.Column>
-          </Grid.Row>
-        </Grid>
-      </Segment>
     </div>
   );
 };
@@ -141,32 +88,40 @@ const DailyTable: React.FC<{
         <Table.Header>
           <Table.HeaderCell>{"Start"}</Table.HeaderCell>
           {rooms != null &&
-            rooms.map(room => {
-              return <Table.HeaderCell>{room.name.en}</Table.HeaderCell>;
+            rooms.map((room, index) => {
+              return (
+                <Table.HeaderCell>
+                  <div style={{ backgroundColor: colors[index] }}>
+                    {room.name.en}
+                  </div>
+                </Table.HeaderCell>
+              );
             })}
         </Table.Header>
         <Table.Body>
-          {Object.entries(talksGroupBySlotStart).map(([time, talks]) => {
-            console.log(rooms[0].name.en);
-            console.log(talks[0].slot.room.en);
+          {Object.entries(talksGroupBySlotStart).map(([time, talks], index) => {
             return (
               <Table.Row>
                 <Table.Cell>{getTime(time)}</Table.Cell>
                 {
                   <>
                     <Table.Cell>
-                      {
-                        talks.find(
-                          talk => talk.slot.room.en === rooms[0].name.en
-                        )?.title
-                      }
+                      <div style={{ backgroundColor: colors[0] }}>
+                        {
+                          talks.find(
+                            talk => talk.slot.room.en === rooms[0].name.en
+                          )?.title
+                        }
+                      </div>
                     </Table.Cell>
                     <Table.Cell>
-                      {
-                        talks.find(
-                          talk => talk.slot.room.en === rooms[1].name.en
-                        )?.title
-                      }
+                      <div style={{ backgroundColor: colors[1] }}>
+                        {
+                          talks.find(
+                            talk => talk.slot.room.en === rooms[1].name.en
+                          )?.title
+                        }
+                      </div>
                     </Table.Cell>
                   </>
                 }
@@ -178,6 +133,9 @@ const DailyTable: React.FC<{
     </>
   );
 };
+
+const colors = ["magenta", "khaki"];
+
 const getTime = (date: string) => {
   return new Date(date).toLocaleTimeString(navigator.language, {
     hour: "2-digit",
