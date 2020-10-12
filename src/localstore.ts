@@ -8,7 +8,7 @@ const getSpeakers = async (noCache?: boolean) => {
     return await pretalxApi.fetchSpeakers();
   } else {
     const speakers = localStorage.getItem("speakers");
-    if (speakers != null && useCache()) {
+    if (speakers != null && useCache("speakers")) {
       return JSON.parse(speakers);
     } else {
       const result = await pretalxApi.fetchSpeakers();
@@ -23,7 +23,7 @@ const getConf = async (noCache?: boolean) => {
     return await pretalxApi.fetchConf();
   } else {
     const conf = localStorage.getItem("conf");
-    if (conf != null && useCache()) {
+    if (conf != null && useCache("conf")) {
       return JSON.parse(conf);
     } else {
       const result = await pretalxApi.fetchConf();
@@ -38,7 +38,7 @@ const getTalks = async (noCache?: boolean) => {
     return await pretalxApi.fetchTalks();
   } else {
     const talks = localStorage.getItem("talks");
-    if (talks != null && useCache()) {
+    if (talks != null && useCache("talks")) {
       return JSON.parse(talks);
     } else {
       const result = await pretalxApi.fetchTalks();
@@ -53,7 +53,7 @@ const getRooms = async (noCache?: boolean) => {
     return await pretalxApi.fetchRooms();
   } else {
     const rooms = localStorage.getItem("rooms");
-    if (rooms != null && useCache()) {
+    if (rooms != null && useCache("rooms")) {
       return JSON.parse(rooms);
     } else {
       const result = await pretalxApi.fetchRooms();
@@ -63,13 +63,17 @@ const getRooms = async (noCache?: boolean) => {
   }
 };
 
-const useCache = () => {
+const useCache = (resource: string) => {
   const now = Date.now();
 
-  const timestamp = localStorage.getItem("timestamp");
+  const timestamp = localStorage.getItem(`timestamp-${resource}`);
   const lastFetch = Number.parseInt(timestamp);
 
-  return lastFetch < now - DAY;
+  const useCacheFlag = lastFetch > now - DAY;
+  if (useCacheFlag === false) {
+    localStorage.setItem(`timestamp-${resource}`, now.toString());
+  }
+  return useCacheFlag;
 };
 
 export default { getSpeakers, getConf, getTalks, getRooms };

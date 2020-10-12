@@ -13,7 +13,7 @@ const useConfData = () => {
     });
     localstore.getTalks().then(data => setTalks(data));
     localstore.getRooms().then(data => setRooms(data));
-  }, [localstore, setEventData]);
+  }, [localstore, setEventData, setTalks, setRooms]);
 
   const talksGroupBySlotStart = chain(talks)
     .sortBy(talk => talk.slot.start)
